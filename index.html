@@ -41,77 +41,160 @@
         </div>
       </header>
 
-      <section class="workspace">
-        <aside class="panel sidebar">
-          <div class="sidebar-title-row">
-            <h2>現場</h2>
-            <span id="roleBadge" class="badge"></span>
-          </div>
-          <div id="siteList" class="site-list"></div>
-        </aside>
+      <nav id="adminNav" class="panel nav-tabs hidden">
+        <button class="nav-tab active" data-view="contentView">コンテンツ管理</button>
+        <button class="nav-tab" data-view="customersView">顧客管理</button>
+        <button class="nav-tab" data-view="playersView">プレイヤー管理</button>
+      </nav>
 
-        <section class="panel editor">
-          <div id="emptyState" class="empty-state">
-            左側から現場を選択してください。
-          </div>
+      <section id="contentView" class="view-section">
+        <section class="workspace">
+          <aside class="panel sidebar">
+            <div class="sidebar-title-row">
+              <h2>現場</h2>
+              <span id="roleBadge" class="badge"></span>
+            </div>
+            <div id="siteList" class="site-list"></div>
+          </aside>
 
-          <div id="editorBody" class="hidden">
-            <div class="editor-heading">
-              <div>
-                <div id="siteIdLabel" class="eyebrow"></div>
-                <h2 id="editorTitle">現場コンテンツ管理</h2>
+          <section class="panel editor">
+            <div id="emptyState" class="empty-state">左側から現場を選択してください。</div>
+
+            <div id="editorBody" class="hidden">
+              <div class="editor-heading">
+                <div>
+                  <div id="siteIdLabel" class="eyebrow"></div>
+                  <h2>現場コンテンツ管理</h2>
+                </div>
+                <span id="saveState" class="save-state">未変更</span>
               </div>
-              <span id="saveState" class="save-state">未変更</span>
+
+              <div class="settings-grid">
+                <label>上段タイトル
+                  <input id="displayTitle" type="text" />
+                </label>
+                <label>工事名・現場名
+                  <input id="projectName" type="text" />
+                </label>
+              </div>
+
+              <h3>コンテンツ</h3>
+              <div class="content-grid">
+                <article class="content-card">
+                  <div class="card-head"><strong>挨拶</strong><span>画像</span></div>
+                  <div class="preview-wrap"><img id="preview-greeting" alt="挨拶プレビュー" /></div>
+                  <input id="file-greeting" type="file" accept="image/*" />
+                  <div class="file-meta" id="meta-greeting"></div>
+                </article>
+
+                <article class="content-card">
+                  <div class="card-head"><strong>お知らせ</strong><span>画像</span></div>
+                  <div class="preview-wrap"><img id="preview-notice" alt="お知らせプレビュー" /></div>
+                  <input id="file-notice" type="file" accept="image/*" />
+                  <div class="file-meta" id="meta-notice"></div>
+                </article>
+
+                <article class="content-card">
+                  <div class="card-head"><strong>週間工程</strong><span>画像</span></div>
+                  <div class="preview-wrap"><img id="preview-schedule" alt="週間工程プレビュー" /></div>
+                  <input id="file-schedule" type="file" accept="image/*" />
+                  <div class="file-meta" id="meta-schedule"></div>
+                </article>
+
+                <article class="content-card">
+                  <div class="card-head"><strong>PR</strong><span>動画</span></div>
+                  <div class="preview-wrap video-preview"><video id="preview-pr" controls muted playsinline></video></div>
+                  <input id="file-pr" type="file" accept="video/*" />
+                  <div class="file-meta" id="meta-pr"></div>
+                </article>
+              </div>
+
+              <div class="live-links">
+                <div><strong>今週の天気</strong><span id="weatherLink"></span></div>
+                <div><strong>今週の降水</strong><span id="precipLink"></span></div>
+              </div>
+
+              <div class="publish-bar">
+                <div class="muted">変更内容は「公開する」でSupabaseへ反映されます。</div>
+                <button id="publishBtn" class="primary">公開する</button>
+              </div>
+            </div>
+          </section>
+        </section>
+      </section>
+
+      <section id="customersView" class="view-section hidden">
+        <section class="panel admin-panel">
+          <div class="admin-heading">
+            <div>
+              <div class="eyebrow">ADMIN</div>
+              <h2>顧客管理</h2>
+              <p class="muted">顧客アカウントの作成と、管理できる現場の割り当てを行います。</p>
+            </div>
+          </div>
+
+          <div class="admin-grid">
+            <div class="admin-card">
+              <h3>新規顧客アカウント</h3>
+              <form id="createCustomerForm" class="form-stack compact">
+                <label>会社名・顧客名
+                  <input id="customerCompany" type="text" placeholder="例：レンタルのニッケン" required />
+                </label>
+                <label>メールアドレス
+                  <input id="customerEmail" type="email" required />
+                </label>
+                <label>初期パスワード
+                  <input id="customerPassword" type="password" minlength="6" required />
+                </label>
+                <button class="primary" type="submit">顧客アカウントを作成</button>
+              </form>
+              <div class="hint">※ このボタンは Supabase Edge Function「create-customer」を使用します。</div>
             </div>
 
-            <div class="settings-grid">
-              <label>上段タイトル
-                <input id="displayTitle" type="text" />
-              </label>
-              <label>工事名・現場名
-                <input id="projectName" type="text" />
-              </label>
+            <div class="admin-card span-2">
+              <div class="card-title-row">
+                <h3>顧客一覧・現場割り当て</h3>
+                <button id="reloadCustomersBtn" class="secondary small">再読込</button>
+              </div>
+              <div id="customerList" class="customer-list"></div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="playersView" class="view-section hidden">
+        <section class="panel admin-panel">
+          <div class="admin-heading">
+            <div>
+              <div class="eyebrow">ADMIN</div>
+              <h2>プレイヤー管理</h2>
+              <p class="muted">新しいサイネージ端末／現場を登録し、既存端末を管理します。</p>
+            </div>
+          </div>
+
+          <div class="admin-grid">
+            <div class="admin-card">
+              <h3>新規プレイヤー登録</h3>
+              <form id="createSiteForm" class="form-stack compact">
+                <label>Site ID
+                  <input id="newSiteId" type="text" placeholder="例：demo002" pattern="[A-Za-z0-9_-]+" required />
+                </label>
+                <label>上段タイトル
+                  <input id="newSiteTitle" type="text" value="デジタルサイネージ" required />
+                </label>
+                <label>工事名・現場名
+                  <input id="newProjectName" type="text" placeholder="例：（仮称）○○新築工事" required />
+                </label>
+                <button class="primary" type="submit">プレイヤーを登録</button>
+              </form>
             </div>
 
-            <h3>コンテンツ</h3>
-            <div class="content-grid">
-              <article class="content-card" data-key="greeting">
-                <div class="card-head"><strong>挨拶</strong><span>画像</span></div>
-                <div class="preview-wrap"><img id="preview-greeting" alt="挨拶プレビュー" /></div>
-                <input id="file-greeting" type="file" accept="image/*" />
-                <div class="file-meta" id="meta-greeting"></div>
-              </article>
-
-              <article class="content-card" data-key="notice">
-                <div class="card-head"><strong>お知らせ</strong><span>画像</span></div>
-                <div class="preview-wrap"><img id="preview-notice" alt="お知らせプレビュー" /></div>
-                <input id="file-notice" type="file" accept="image/*" />
-                <div class="file-meta" id="meta-notice"></div>
-              </article>
-
-              <article class="content-card" data-key="schedule">
-                <div class="card-head"><strong>週間工程</strong><span>画像</span></div>
-                <div class="preview-wrap"><img id="preview-schedule" alt="週間工程プレビュー" /></div>
-                <input id="file-schedule" type="file" accept="image/*" />
-                <div class="file-meta" id="meta-schedule"></div>
-              </article>
-
-              <article class="content-card" data-key="pr">
-                <div class="card-head"><strong>PR</strong><span>動画</span></div>
-                <div class="preview-wrap video-preview"><video id="preview-pr" controls muted playsinline></video></div>
-                <input id="file-pr" type="file" accept="video/*" />
-                <div class="file-meta" id="meta-pr"></div>
-              </article>
-            </div>
-
-            <div class="live-links">
-              <div><strong>今週の天気</strong><span id="weatherLink"></span></div>
-              <div><strong>今週の降水</strong><span id="precipLink"></span></div>
-            </div>
-
-            <div class="publish-bar">
-              <div class="muted">変更内容は「公開する」でSupabaseへ反映されます。</div>
-              <button id="publishBtn" class="primary">公開する</button>
+            <div class="admin-card span-2">
+              <div class="card-title-row">
+                <h3>登録済みプレイヤー</h3>
+                <button id="reloadPlayersBtn" class="secondary small">再読込</button>
+              </div>
+              <div id="playerList" class="player-list"></div>
             </div>
           </div>
         </section>
