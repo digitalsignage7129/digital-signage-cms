@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>デジタルサイネージ 管理</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+
+  <main class="shell">
+    <section id="loginView" class="panel login-panel">
+      <div class="brand-block">
+        <div class="brand-kicker">DIGITAL SIGNAGE CMS</div>
+        <h1>デジタルサイネージ 管理</h1>
+        <p>登録済みのアカウントでログインしてください。</p>
+      </div>
+      <form id="loginForm" class="form-stack">
+        <label>メールアドレス
+          <input id="email" type="email" autocomplete="username" required />
+        </label>
+        <label>パスワード
+          <input id="password" type="password" autocomplete="current-password" required />
+        </label>
+        <button class="primary" type="submit">ログイン</button>
+      </form>
+      <div id="configWarning" class="warning hidden"></div>
+    </section>
+
+    <section id="appView" class="hidden">
+      <header class="topbar panel">
+        <div>
+          <div class="brand-kicker">DIGITAL SIGNAGE CMS</div>
+          <h1>デジタルサイネージ 管理</h1>
+          <div id="accountInfo" class="muted"></div>
+        </div>
+        <div class="top-actions">
+          <button id="refreshBtn" class="secondary">更新</button>
+          <button id="logoutBtn" class="secondary">ログアウト</button>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <aside class="panel sidebar">
+          <div class="sidebar-title-row">
+            <h2>現場</h2>
+            <span id="roleBadge" class="badge"></span>
+          </div>
+          <div id="siteList" class="site-list"></div>
+        </aside>
+
+        <section class="panel editor">
+          <div id="emptyState" class="empty-state">
+            左側から現場を選択してください。
+          </div>
+
+          <div id="editorBody" class="hidden">
+            <div class="editor-heading">
+              <div>
+                <div id="siteIdLabel" class="eyebrow"></div>
+                <h2 id="editorTitle">現場コンテンツ管理</h2>
+              </div>
+              <span id="saveState" class="save-state">未変更</span>
+            </div>
+
+            <div class="settings-grid">
+              <label>上段タイトル
+                <input id="displayTitle" type="text" />
+              </label>
+              <label>工事名・現場名
+                <input id="projectName" type="text" />
+              </label>
+            </div>
+
+            <h3>コンテンツ</h3>
+            <div class="content-grid">
+              <article class="content-card" data-key="greeting">
+                <div class="card-head"><strong>挨拶</strong><span>画像</span></div>
+                <div class="preview-wrap"><img id="preview-greeting" alt="挨拶プレビュー" /></div>
+                <input id="file-greeting" type="file" accept="image/*" />
+                <div class="file-meta" id="meta-greeting"></div>
+              </article>
+
+              <article class="content-card" data-key="notice">
+                <div class="card-head"><strong>お知らせ</strong><span>画像</span></div>
+                <div class="preview-wrap"><img id="preview-notice" alt="お知らせプレビュー" /></div>
+                <input id="file-notice" type="file" accept="image/*" />
+                <div class="file-meta" id="meta-notice"></div>
+              </article>
+
+              <article class="content-card" data-key="schedule">
+                <div class="card-head"><strong>週間工程</strong><span>画像</span></div>
+                <div class="preview-wrap"><img id="preview-schedule" alt="週間工程プレビュー" /></div>
+                <input id="file-schedule" type="file" accept="image/*" />
+                <div class="file-meta" id="meta-schedule"></div>
+              </article>
+
+              <article class="content-card" data-key="pr">
+                <div class="card-head"><strong>PR</strong><span>動画</span></div>
+                <div class="preview-wrap video-preview"><video id="preview-pr" controls muted playsinline></video></div>
+                <input id="file-pr" type="file" accept="video/*" />
+                <div class="file-meta" id="meta-pr"></div>
+              </article>
+            </div>
+
+            <div class="live-links">
+              <div><strong>今週の天気</strong><span id="weatherLink"></span></div>
+              <div><strong>今週の降水</strong><span id="precipLink"></span></div>
+            </div>
+
+            <div class="publish-bar">
+              <div class="muted">変更内容は「公開する」でSupabaseへ反映されます。</div>
+              <button id="publishBtn" class="primary">公開する</button>
+            </div>
+          </div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
