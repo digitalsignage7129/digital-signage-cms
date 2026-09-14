@@ -1,39 +1,16 @@
-# Digital Signage CMS - Admin Update
+# Digital Signage CMS - Device Link Update
 
-現在のCMSに以下を追加した更新版です。
+기존 관리자 CMS에 **실제 Android V3 단말 등록코드 연결 기능**을 추가한 업데이트입니다.
 
-- 管理者タブ
-  - コンテンツ管理
-  - 顧客管理
-  - プレイヤー管理
-- 顧客ごとの現場割り当て
-- 新規プレイヤー / 現場登録
-- プレイヤー削除
-- 顧客アカウント作成UI
+GitHub에는 아래 3개만 덮어쓰면 됩니다.
+- index.html
+- app.js
+- styles.css
 
-## GitHubへ上書きするファイル
+기존 `config.js`는 Publishable key가 들어 있으므로 덮어쓰지 마세요.
 
-現在の `config.js` には Publishable key が入っているため、**config.js は上書きしないでください。**
-
-以下の3ファイルだけ、GitHubリポジトリのルートへ上書きしてください。
-
-- `index.html`
-- `app.js`
-- `styles.css`
-
-## 顧客アカウント作成について
-
-顧客作成はブラウザに Secret key / service_role key を置かないため、Supabase Edge Function `create-customer` を使用します。
-
-このZIPには以下も同梱しています。
-
-`supabase/functions/create-customer/index.ts`
-
-Edge Functionをまだデプロイしていない場合でも、以下は先に利用できます。
-
-- コンテンツ管理
-- プレイヤー登録
-- プレイヤー削除
-- 既存顧客への現場割り当て
-
-新しい顧客アカウントの作成だけは、Edge Function設定後に利用可能です。
+## 새 기능
+- プレイヤー管理 화면에 `実機の登録コード` 영역 추가
+- V3 앱에서 올라온 등록코드 확인
+- 등록코드를 demo001/demo002 등 Site ID에 연결/해제
+- 연결 후 V3 앱이 자동으로 Site ID를 받아 CMS 콘텐츠를 수신

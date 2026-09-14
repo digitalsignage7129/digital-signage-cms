@@ -106,3 +106,8 @@ input[type="file"] { width: 100%; }
   .top-actions { width: 100%; }
   .top-actions button { flex: 1; }
 }
+.device-link-grid{display:grid;grid-template-columns:1.1fr 1fr auto;gap:10px;align-items:end;margin-top:12px}
+.device-code{font-size:20px;font-weight:800;letter-spacing:.08em;color:#0d5cc8}
+.device-status{font-size:12px;color:#68798c;margin-top:3px}
+.compact-note{margin:2px 0 0}
+@media (max-width:800px){.device-link-grid{grid-template-columns:1fr}}

@@ -23,6 +23,7 @@ const precipLink = $('#precipLink');
 const adminNav = $('#adminNav');
 const customerList = $('#customerList');
 const playerList = $('#playerList');
+const deviceList = $('#deviceList');
 
 const DEFAULT_WEATHER = 'https://digital-signage-led.github.io/led-weather-signage/?region=national&content=weekly_weather';
 const DEFAULT_PRECIP = 'https://digital-signage-led.github.io/led-weather-signage/?region=national&content=weekly_precip';
@@ -126,7 +127,7 @@ function switchView(id) {
   $$('.view-section').forEach(v => v.classList.toggle('hidden', v.id !== id));
   $$('.nav-tab').forEach(b => b.classList.toggle('active', b.dataset.view === id));
   if (id === 'customersView' && isAdmin()) loadCustomers();
-  if (id === 'playersView' && isAdmin()) renderPlayers();
+  if (id === 'playersView' && isAdmin()) { renderPlayers(); loadDevices(); }
 }
 
 $$('.nav-tab').forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
@@ -491,5 +492,78 @@ async function deleteSite(site) {
 }
 
 $('#reloadPlayersBtn').addEventListener('click', async () => { await loadSites(); toast('プレイヤー一覧を更新しました。'); });
+
+
+async function loadDevices() {
+  if (!deviceList || !isAdmin()) return;
+  deviceList.innerHTML = '<div class="muted">読込中...</div>';
+  const { data, error } = await supabase
+    .from('devices')
+    .select('id,device_uid,registration_code,site_id,created_at,linked_at,last_seen_at')
+    .order('created_at', { ascending: false });
+  if (error) {
+    deviceList.innerHTML = '';
+    toast(`端末一覧の取得に失敗しました: ${error.message}`, true);
+    return;
+  }
+  renderDevices(data || []);
+}
+
+function renderDevices(devices) {
+  deviceList.innerHTML = '';
+  if (!devices.length) {
+    deviceList.innerHTML = '<div class="muted">まだ実機から登録コードが届いていません。V3アプリを起動してください。</div>';
+    return;
+  }
+  for (const device of devices) {
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    const linked = sites.find(s => s.site_id === device.site_id);
+    row.innerHTML = `
+      <div class="row-head">
+        <div>
+          <div class="device-code">${escapeHtml(device.registration_code || '')}</div>
+          <div class="device-status">${device.site_id ? `接続済み: ${escapeHtml(device.site_id)}${linked ? ` / ${escapeHtml(linked.project_name || '')}` : ''}` : '未接続'}</div>
+          <div class="row-sub">DEVICE: ${escapeHtml(device.device_uid || '')}</div>
+        </div>
+        <span class="badge">DEVICE</span>
+      </div>
+      <div class="device-link-grid">
+        <label>接続する Site ID
+          <select class="device-site-select">
+            <option value="">未接続</option>
+            ${sites.map(site => `<option value="${escapeHtml(site.site_id)}" ${site.site_id === device.site_id ? 'selected' : ''}>${escapeHtml(site.site_id)} / ${escapeHtml(site.project_name || site.site_id)}</option>`).join('')}
+          </select>
+        </label>
+        <div class="muted">アプリ側は接続後、自動的にこの Site ID のコンテンツを受信します。</div>
+        <button class="primary small save-device-link">接続を保存</button>
+      </div>`;
+    row.querySelector('.save-device-link').addEventListener('click', async () => {
+      const btn = row.querySelector('.save-device-link');
+      const site_id = row.querySelector('.device-site-select').value || null;
+      btn.disabled = true;
+      btn.textContent = '保存中...';
+      try {
+        const patch = { site_id, linked_at: site_id ? new Date().toISOString() : null };
+        const { error } = await supabase.from('devices').update(patch).eq('id', device.id);
+        if (error) throw error;
+        toast(site_id ? '実機をプレイヤーに接続しました。' : '実機の接続を解除しました。');
+        await loadDevices();
+      } catch (err) {
+        console.error(err);
+        toast(`端末接続の保存に失敗しました: ${err.message || err}`, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '接続を保存';
+      }
+    });
+    deviceList.appendChild(row);
+  }
+}
+
+$('#reloadDevicesBtn')?.addEventListener('click', async () => {
+  await loadDevices();
+  toast('実機一覧を更新しました。');
+});
 
 init();
