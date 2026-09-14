@@ -536,7 +536,8 @@ function renderDevices(devices) {
           </select>
         </label>
         <div class="muted">アプリ側は接続後、自動的にこの Site ID のコンテンツを受信します。</div>
-        <button class="primary small save-device-link">接続を保存</button>
+       <button class="primary small save-device-link">接続を保存</button>
+       <button class="danger small delete-device">削除</button>
       </div>`;
     row.querySelector('.save-device-link').addEventListener('click', async () => {
       const btn = row.querySelector('.save-device-link');
@@ -555,6 +556,34 @@ function renderDevices(devices) {
       } finally {
         btn.disabled = false;
         btn.textContent = '接続を保存';
+      }
+    });
+        row.querySelector('.delete-device').addEventListener('click', async () => {
+      const ok = confirm(
+        `登録コード「${device.registration_code || ''}」を削除しますか？\n\nこの操作は元に戻せません。`
+      );
+      if (!ok) return;
+
+      const btn = row.querySelector('.delete-device');
+      btn.disabled = true;
+      btn.textContent = '削除中...';
+
+      try {
+        const { error } = await supabase
+          .from('devices')
+          .delete()
+          .eq('id', device.id);
+
+        if (error) throw error;
+
+        toast('登録コードを削除しました。');
+        await loadDevices();
+
+      } catch (err) {
+        console.error(err);
+        toast(`登録コードの削除に失敗しました: ${err.message || err}`, true);
+        btn.disabled = false;
+        btn.textContent = '削除';
       }
     });
     deviceList.appendChild(row);
