@@ -178,7 +178,7 @@ function selectSite(site) {
   siteIdLabel.textContent = `SITE ID: ${site.site_id}`;
   displayTitle.value = site.title || '';
   projectName.value = site.project_name || '';
-  weatherRegion.value = site.weather_region || 'national';
+  weatherRegion.value = site.weather_region || 'region';
   weatherLink.textContent = site.weather_url || '';
   precipLink.textContent = site.precip_url || '';
   saveState.textContent = '公開済み';
