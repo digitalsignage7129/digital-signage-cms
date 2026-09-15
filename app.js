@@ -15,6 +15,11 @@ const emptyState = $('#emptyState');
 const editorBody = $('#editorBody');
 const displayTitle = $('#displayTitle');
 const projectName = $('#projectName');
+
+const greetingLabel = $('#greetingLabel');
+const noticeLabel = $('#noticeLabel');
+const scheduleLabel = $('#scheduleLabel');
+
 const siteIdLabel = $('#siteIdLabel');
 const saveState = $('#saveState');
 const publishBtn = $('#publishBtn');
@@ -178,6 +183,11 @@ function selectSite(site) {
   siteIdLabel.textContent = `SITE ID: ${site.site_id}`;
   displayTitle.value = site.title || '';
   projectName.value = site.project_name || '';
+  
+  greetingLabel.value = site.greeting_label || '挨拶';
+  noticeLabel.value = site.notice_label || 'お知らせ';
+  scheduleLabel.value = site.schedule_label || '週間工程';
+  
   weatherRegion.value = site.weather_region || 'region';
   weatherLink.textContent = site.weather_url || '';
   precipLink.textContent = site.precip_url || '';
@@ -225,6 +235,11 @@ for (const [key, spec] of Object.entries(fields)) {
 
 displayTitle.addEventListener('input', () => setDirty(true));
 projectName.addEventListener('input', () => setDirty(true));
+
+greetingLabel.addEventListener('input', () => setDirty(true));
+noticeLabel.addEventListener('input', () => setDirty(true));
+scheduleLabel.addEventListener('input', () => setDirty(true));
+
 weatherRegion.addEventListener('change', () => setDirty(true));
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -256,14 +271,19 @@ publishBtn.addEventListener('click', async () => {
     const weatherUrl = `https://digital-signage-led.github.io/led-weather-signage/?region=${region}&content=weekly_weather`;
     const precipUrl = `https://digital-signage-led.github.io/led-weather-signage/?region=${region}&content=weekly_precip`;
     const patch = {
-      title: displayTitle.value.trim(),
-      project_name: projectName.value.trim(),
-      weather_url: weatherUrl,
-      precip_url: precipUrl,
-      weather_region: region,
-      weather_mode: 'weekly',
-      updated_at: new Date().toISOString()
-    };
+  title: displayTitle.value.trim(),
+  project_name: projectName.value.trim(),
+
+  greeting_label: greetingLabel.value.trim() || '挨拶',
+  notice_label: noticeLabel.value.trim() || 'お知らせ',
+  schedule_label: scheduleLabel.value.trim() || '週間工程',
+
+  weather_url: weatherUrl,
+  precip_url: precipUrl,
+  weather_region: region,
+  weather_mode: 'weekly',
+  updated_at: new Date().toISOString()
+};
     if (!patch.title || !patch.project_name) throw new Error('タイトルと工事名を入力してください。');
 
     for (const [key, file] of Object.entries(pendingFiles)) {
