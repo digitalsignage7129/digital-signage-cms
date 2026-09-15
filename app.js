@@ -25,8 +25,9 @@ const customerList = $('#customerList');
 const playerList = $('#playerList');
 const deviceList = $('#deviceList');
 
-const DEFAULT_WEATHER = 'https://digital-signage-led.github.io/led-weather-signage/?region=national&content=weekly_weather';
-const DEFAULT_PRECIP = 'https://digital-signage-led.github.io/led-weather-signage/?region=national&content=weekly_precip';
+const DEFAULT_WEATHER_TODAY = 'https://digital-signage-led.github.io/led-weather-signage/?region=national&content=today_weather';
+const DEFAULT_WEATHER_TOMORROW = 'https://digital-signage-led.github.io/led-weather-signage/?region=national&content=tomorrow_weather';
+const DEFAULT_WEATHER_WEEKLY = 'https://digital-signage-led.github.io/led-weather-signage/?region=national&content=weekly_weather';
 
 const fields = {
   greeting: { input: '#file-greeting', preview: '#preview-greeting', meta: '#meta-greeting', column: 'greeting_image_url', kind: 'image' },
@@ -447,8 +448,9 @@ $('#createSiteForm').addEventListener('submit', async (e) => {
       site_id,
       title,
       project_name,
-      weather_url: DEFAULT_WEATHER,
-      precip_url: DEFAULT_PRECIP,
+      weather_url: DEFAULT_WEATHER_TODAY,
+      precip_url: DEFAULT_WEATHER_WEEKLY,
+      weather_mode: 'today',
       updated_at: new Date().toISOString()
     };
     const { error } = await supabase.from('sites').insert(payload);
@@ -537,7 +539,7 @@ function renderDevices(devices) {
         </label>
         <div class="muted">アプリ側は接続後、自動的にこの Site ID のコンテンツを受信します。</div>
        <button class="primary small save-device-link">接続を保存</button>
-       <button class="danger small delete-device">削除</button>
+       <button class="danger-btn small delete-device">削除</button>
       </div>`;
     row.querySelector('.save-device-link').addEventListener('click', async () => {
       const btn = row.querySelector('.save-device-link');
