@@ -530,12 +530,10 @@ function renderSiteList() {
 ========================================================= */
 
 function selectSite(site) {
-
   selectedSite = site;
 
   pendingFiles = {};
   pendingImagePaths = {};
-
   dirty = false;
 
   renderSiteList();
@@ -543,131 +541,80 @@ function selectSite(site) {
   emptyState.classList.add('hidden');
   editorBody.classList.remove('hidden');
 
-  siteIdLabel.textContent =
-    `SITE ID: ${site.site_id}`;
+  siteIdLabel.textContent = `SITE ID: ${site.site_id}`;
 
-  displayTitle.value =
-    site.title || '';
+  displayTitle.value = site.title || '';
+  projectName.value = site.project_name || '';
 
-  projectName.value =
-    site.project_name || '';
-
-  /* 메뉴 이름 */
-
-  greetingLabel.value =
-    site.greeting_label || '挨拶';
-
-  noticeLabel.value =
-    site.notice_label || 'お知らせ';
-
-  scheduleLabel.value =
-    site.schedule_label || '週間工程';
+  // 메뉴명
+  greetingLabel.value = site.greeting_label || '挨拶';
+  noticeLabel.value = site.notice_label || 'お知らせ';
+  scheduleLabel.value = site.schedule_label || '週間工程';
 
   if (cardTitleGreeting) {
-    cardTitleGreeting.textContent =
-      greetingLabel.value;
+    cardTitleGreeting.textContent = greetingLabel.value;
   }
 
   if (cardTitleNotice) {
-    cardTitleNotice.textContent =
-      noticeLabel.value;
+    cardTitleNotice.textContent = noticeLabel.value;
   }
 
   if (cardTitleSchedule) {
-    cardTitleSchedule.textContent =
-      scheduleLabel.value;
+    cardTitleSchedule.textContent = scheduleLabel.value;
   }
 
-  /* 날씨 */
+  // 날씨
+  weatherRegion.value = site.weather_region || 'national';
+  weatherLink.textContent = site.weather_url || '';
+  precipLink.textContent = site.precip_url || '';
 
-  weatherRegion.value =
-    site.weather_region || 'national';
+  saveState.textContent = '公開済み';
+  saveState.className = 'save-state saved';
 
-  weatherLink.textContent =
-    site.weather_url || '';
+  // 콘텐츠 불러오기
+  for (const [key, spec] of Object.entries(fields)) {
+    const value = site[spec.column] || '';
 
-  precipLink.textContent =
-    site.precip_url || '';
-
-  saveState.textContent =
-    '公開済み';
-
-  saveState.className =
-    'save-state saved';
-
-
-  /* 콘텐츠 */
-
-  for (
-    const [key, spec]
-    of Object.entries(fields)
-  ) {
-
-    const value =
-      site[spec.column] || '';
-
-    const input =
-      $(spec.input);
-
-    const meta =
-      $(spec.meta);
+    const input = $(spec.input);
+    const meta = $(spec.meta);
 
     if (input) {
       input.value = '';
     }
 
-    /* 이미지 메뉴 */
-
+    // 이미지 메뉴
     if (spec.multiple) {
+      const paths = Array.isArray(value) ? value : [];
 
-      const paths =
-        Array.isArray(value)
-          ? value
-          : [];
-
-      pendingImagePaths[key] =
-        [...paths];
+      pendingImagePaths[key] = [...paths];
 
       if (meta) {
-        meta.textContent =
-          paths.length
-            ? `${paths.length}枚公開中`
-            : '未登録';
+        meta.textContent = paths.length
+          ? `${paths.length}枚公開中`
+          : '未登録';
       }
 
-      renderImageGallery(
-        key,
-        paths
-      );
-
+      renderImageGallery(key, paths);
       continue;
     }
 
-    /* PR 동영상 */
-
-    const preview =
-      $(spec.preview);
-
+    // PR 동영상
+    const preview = $(spec.preview);
     const path = value;
 
     if (meta) {
-      meta.textContent =
-        path || '未登録';
+      meta.textContent = path || '未登録';
     }
 
     if (!preview) continue;
 
-    const url =
-      publicUrl(path);
+    const url = publicUrl(path);
 
     preview.removeAttribute('src');
     preview.load();
 
     if (url) {
-
-      preview.src =
-        `${url}?v=${Date.now()}`;
-
+      preview.src = `${url}?v=${Date.now()}`;
       preview.load();
     }
   }
