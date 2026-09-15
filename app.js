@@ -39,9 +39,9 @@ const DEFAULT_WEATHER_TOMORROW = 'https://digital-signage-led.github.io/led-weat
 const DEFAULT_WEATHER_WEEKLY = 'https://digital-signage-led.github.io/led-weather-signage/?region=national&content=weekly_weather';
 
 const fields = {
-  greeting: { input: '#file-greeting', preview: '#preview-greeting', meta: '#meta-greeting', column: 'greeting_image_urls', kind: 'image', multiple: true },
-notice: { input: '#file-notice', preview: '#preview-notice', meta: '#meta-notice', column: 'notice_image_urls', kind: 'image', multiple: true },
-schedule: { input: '#file-schedule', preview: '#preview-schedule', meta: '#meta-schedule', column: 'schedule_image_urls', kind: 'image', multiple: true },
+ greeting: { input: '#file-greeting', preview: '#preview-greeting', gallery: '#gallery-greeting', meta: '#meta-greeting', column: 'greeting_image_urls', kind: 'image', multiple: true },
+notice: { input: '#file-notice', preview: '#preview-notice', gallery: '#gallery-notice', meta: '#meta-notice', column: 'notice_image_urls', kind: 'image', multiple: true },
+schedule: { input: '#file-schedule', preview: '#preview-schedule', gallery: '#gallery-schedule', meta: '#meta-schedule', column: 'schedule_image_urls', kind: 'image', multiple: true },
   pr: { input: '#file-pr', preview: '#preview-pr', meta: '#meta-pr', column: 'pr_video_url', kind: 'video' }
 };
 
@@ -52,6 +52,7 @@ let sites = [];
 let customers = [];
 let selectedSite = null;
 let pendingFiles = {};
+let pendingImagePaths = {};
 let dirty = false;
 
 function isAdmin() { return currentProfile?.role === 'admin'; }
@@ -79,7 +80,75 @@ function publicUrl(path) {
   const { data } = supabase.storage.from(cfg.STORAGE_BUCKET).getPublicUrl(path);
   return data?.publicUrl || '';
 }
+function renderImageGallery(key, items = []) {
+  const spec = fields[key];
+  if (!spec || !spec.gallery) return;
 
+  const gallery = $(spec.gallery);
+  gallery.innerHTML = '';
+
+  items.forEach((item, index) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'preview-wrap';
+
+    const img = document.createElement('img');
+
+    if (item instanceof File) {
+      img.src = URL.createObjectURL(item);
+    } else {
+      img.src = `${publicUrl(item)}?v=${Date.now()}`;
+    }
+
+    img.alt = `${key} ${index + 1}`;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'image-remove-btn';
+    removeBtn.textContent = '×';
+
+    removeBtn.addEventListener('click', () => {
+  // 새로 추가한 이미지
+  if (item instanceof File) {
+    const files = Array.isArray(pendingFiles[key])
+      ? pendingFiles[key]
+      : [];
+
+    const fileIndex = files.indexOf(item);
+
+    if (fileIndex >= 0) {
+      files.splice(fileIndex, 1);
+    }
+
+    pendingFiles[key] = files;
+  }
+
+  // 이미 공개되어 있던 이미지
+  else {
+    const paths = Array.isArray(pendingImagePaths[key])
+      ? pendingImagePaths[key]
+      : [];
+
+    pendingImagePaths[key] = paths.filter(path => path !== item);
+  }
+
+  const paths = pendingImagePaths[key] || [];
+  const files = pendingFiles[key] || [];
+  const allItems = [...paths, ...files];
+
+  renderImageGallery(key, allItems);
+
+  const meta = $(spec.meta);
+  meta.textContent = allItems.length
+    ? `${allItems.length} / 5枚`
+    : '未登録';
+
+  setDirty(true);
+});
+    wrap.appendChild(img);
+    wrap.appendChild(removeBtn);
+    gallery.appendChild(wrap);
+  });
+}
 function validateConfig() {
   if (!cfg.SUPABASE_URL || !cfg.SUPABASE_PUBLISHABLE_KEY || cfg.SUPABASE_PUBLISHABLE_KEY.includes('PASTE_')) {
     configWarning.textContent = 'config.js に Supabase Publishable key を設定してください。';
@@ -212,20 +281,13 @@ input.value = '';
 // 複数画像
 if (spec.multiple) {
   const paths = Array.isArray(value) ? value : [];
-
+pendingImagePaths[key] = [...paths];
+  
   meta.textContent = paths.length
     ? `${paths.length}枚公開中`
     : '未登録';
 
-  const firstPath = paths[0];
-  const url = firstPath ? publicUrl(firstPath) : '';
-
-  preview.removeAttribute('src');
-
-  if (url) {
-    preview.src = `${url}?v=${Date.now()}`;
-    preview.load();
-  }
+renderImageGallery(key, paths);
 
   continue;
 }
@@ -254,26 +316,37 @@ for (const [key, spec] of Object.entries(fields)) {
 
   // 이미지 메뉴는 최대 5장
   if (spec.multiple) {
-    if (files.length > 5) {
-      toast('画像は最大5枚まで選択できます。', true);
-      e.target.value = '';
-      return;
-    }
+  const existingFiles = Array.isArray(pendingFiles[key])
+  ? pendingFiles[key]
+  : [];
 
-    pendingFiles[key] = files;
+const existingPaths = Array.isArray(pendingImagePaths[key])
+  ? pendingImagePaths[key]
+  : [];
 
-    const preview = $(spec.preview);
-    const meta = $(spec.meta);
-
-    // 우선 첫 번째 이미지를 대표 미리보기로 표시
-    const objectUrl = URL.createObjectURL(files[0]);
-    preview.src = objectUrl;
-    preview.load();
-
-    meta.textContent = `${files.length}枚選択中`;
-    setDirty(true);
+if (existingPaths.length + existingFiles.length >= 5) {
+    toast('画像は最大5枚まで登録できます。', true);
+    e.target.value = '';
     return;
   }
+
+  const file = files[0];
+  pendingFiles[key] = [...existingFiles, file];
+
+  const meta = $(spec.meta);
+
+renderImageGallery(key, [
+  ...existingPaths,
+  ...pendingFiles[key]
+]);
+
+meta.textContent =
+  `${existingPaths.length + pendingFiles[key].length} / 5枚`;
+
+  e.target.value = '';
+  setDirty(true);
+  return;
+}
 
   // PR 동영상은 기존대로 1개
   const file = files[0];
