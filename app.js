@@ -19,6 +19,9 @@ const projectName = $('#projectName');
 const greetingLabel = $('#greetingLabel');
 const noticeLabel = $('#noticeLabel');
 const scheduleLabel = $('#scheduleLabel');
+const cardTitleGreeting = $('#cardTitleGreeting');
+const cardTitleNotice = $('#cardTitleNotice');
+const cardTitleSchedule = $('#cardTitleSchedule');
 
 const siteIdLabel = $('#siteIdLabel');
 const saveState = $('#saveState');
@@ -187,6 +190,10 @@ function selectSite(site) {
   greetingLabel.value = site.greeting_label || '挨拶';
   noticeLabel.value = site.notice_label || 'お知らせ';
   scheduleLabel.value = site.schedule_label || '週間工程';
+
+cardTitleGreeting.textContent = greetingLabel.value;
+cardTitleNotice.textContent = noticeLabel.value;
+cardTitleSchedule.textContent = scheduleLabel.value;
   
   weatherRegion.value = site.weather_region || 'region';
   weatherLink.textContent = site.weather_url || '';
@@ -239,6 +246,21 @@ projectName.addEventListener('input', () => setDirty(true));
 greetingLabel.addEventListener('input', () => setDirty(true));
 noticeLabel.addEventListener('input', () => setDirty(true));
 scheduleLabel.addEventListener('input', () => setDirty(true));
+
+greetingLabel.addEventListener('input', () => {
+  cardTitleGreeting.textContent = greetingLabel.value.trim() || '挨拶';
+  setDirty(true);
+});
+
+noticeLabel.addEventListener('input', () => {
+  cardTitleNotice.textContent = noticeLabel.value.trim() || 'お知らせ';
+  setDirty(true);
+});
+
+scheduleLabel.addEventListener('input', () => {
+  cardTitleSchedule.textContent = scheduleLabel.value.trim() || '週間工程';
+  setDirty(true);
+});
 
 weatherRegion.addEventListener('change', () => setDirty(true));
 loginForm.addEventListener('submit', async (e) => {
