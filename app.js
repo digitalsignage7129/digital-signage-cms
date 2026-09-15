@@ -20,6 +20,7 @@ const saveState = $('#saveState');
 const publishBtn = $('#publishBtn');
 const weatherLink = $('#weatherLink');
 const precipLink = $('#precipLink');
+const weatherRegion = $('#weatherRegion');
 const adminNav = $('#adminNav');
 const customerList = $('#customerList');
 const playerList = $('#playerList');
@@ -177,6 +178,7 @@ function selectSite(site) {
   siteIdLabel.textContent = `SITE ID: ${site.site_id}`;
   displayTitle.value = site.title || '';
   projectName.value = site.project_name || '';
+  weatherRegion.value = site.weather_region || 'national';
   weatherLink.textContent = site.weather_url || '';
   precipLink.textContent = site.precip_url || '';
   saveState.textContent = '公開済み';
@@ -223,7 +225,7 @@ for (const [key, spec] of Object.entries(fields)) {
 
 displayTitle.addEventListener('input', () => setDirty(true));
 projectName.addEventListener('input', () => setDirty(true));
-
+weatherRegion.addEventListener('change', () => setDirty(true));
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = $('#email').value.trim();
@@ -250,9 +252,15 @@ publishBtn.addEventListener('click', async () => {
   publishBtn.disabled = true;
   publishBtn.textContent = '公開中...';
   try {
+    const region = weatherRegion.value;
+    const weatherUrl = `https://digital-signage-led.github.io/led-weather-signage/?region=${region}&content=today_weather`;
+    const precipUrl = `https://digital-signage-led.github.io/led-weather-signage/?region=${region}&content=weekly_precip`;
     const patch = {
       title: displayTitle.value.trim(),
       project_name: projectName.value.trim(),
+      weather_url: weatherUrl,
+      precip_url: precipUrl,
+      weather_mode: 'today',
       updated_at: new Date().toISOString()
     };
     if (!patch.title || !patch.project_name) throw new Error('タイトルと工事名を入力してください。');
