@@ -39,9 +39,9 @@ const DEFAULT_WEATHER_TOMORROW = 'https://digital-signage-led.github.io/led-weat
 const DEFAULT_WEATHER_WEEKLY = 'https://digital-signage-led.github.io/led-weather-signage/?region=national&content=weekly_weather';
 
 const fields = {
-  greeting: { input: '#file-greeting', preview: '#preview-greeting', meta: '#meta-greeting', column: 'greeting_image_url', kind: 'image' },
-  notice: { input: '#file-notice', preview: '#preview-notice', meta: '#meta-notice', column: 'notice_image_url', kind: 'image' },
-  schedule: { input: '#file-schedule', preview: '#preview-schedule', meta: '#meta-schedule', column: 'schedule_image_url', kind: 'image' },
+  greeting: { input: '#file-greeting', preview: '#preview-greeting', meta: '#meta-greeting', column: 'greeting_image_urls', kind: 'image', multiple: true },
+notice: { input: '#file-notice', preview: '#preview-notice', meta: '#meta-notice', column: 'notice_image_urls', kind: 'image', multiple: true },
+schedule: { input: '#file-schedule', preview: '#preview-schedule', meta: '#meta-schedule', column: 'schedule_image_urls', kind: 'image', multiple: true },
   pr: { input: '#file-pr', preview: '#preview-pr', meta: '#meta-pr', column: 'pr_video_url', kind: 'video' }
 };
 
@@ -202,42 +202,102 @@ cardTitleSchedule.textContent = scheduleLabel.value;
   saveState.className = 'save-state saved';
 
   for (const spec of Object.values(fields)) {
-    const path = site[spec.column] || '';
-    const preview = $(spec.preview);
-    const input = $(spec.input);
-    const meta = $(spec.meta);
-    input.value = '';
-    meta.textContent = path || '未登録';
-    const url = publicUrl(path);
-    if (spec.kind === 'image') {
-      preview.removeAttribute('src');
-      if (url) preview.src = `${url}?v=${Date.now()}`;
-    } else {
-      preview.removeAttribute('src');
-      preview.load();
-      if (url) { preview.src = `${url}?v=${Date.now()}`; preview.load(); }
-    }
+    const value = site[spec.column] || '';
+const preview = $(spec.preview);
+const input = $(spec.input);
+const meta = $(spec.meta);
+
+input.value = '';
+
+// 複数画像
+if (spec.multiple) {
+  const paths = Array.isArray(value) ? value : [];
+
+  meta.textContent = paths.length
+    ? `${paths.length}枚公開中`
+    : '未登録';
+
+  const firstPath = paths[0];
+  const url = firstPath ? publicUrl(firstPath) : '';
+
+  preview.removeAttribute('src');
+
+  if (url) {
+    preview.src = `${url}?v=${Date.now()}`;
+    preview.load();
+  }
+
+  continue;
+}
+
+// PR動画
+const path = value;
+meta.textContent = path || '未登録';
+
+const url = publicUrl(path);
+
+preview.removeAttribute('src');
+preview.load();
+
+if (url) {
+  preview.src = `${url}?v=${Date.now()}`;
+  preview.load();
+}
   }
 }
 
 for (const [key, spec] of Object.entries(fields)) {
   $(spec.input).addEventListener('change', (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (key === 'pr' && file.size > 50 * 1024 * 1024) {
-      toast('PR動画は50MB以下にしてください。', true);
+  const files = Array.from(e.target.files || []);
+
+  if (!files.length) return;
+
+  // 이미지 메뉴는 최대 5장
+  if (spec.multiple) {
+    if (files.length > 5) {
+      toast('画像は最大5枚まで選択できます。', true);
       e.target.value = '';
       return;
     }
-    pendingFiles[key] = file;
+
+    pendingFiles[key] = files;
+
     const preview = $(spec.preview);
     const meta = $(spec.meta);
-    const objectUrl = URL.createObjectURL(file);
-    if (spec.kind === 'image') preview.src = objectUrl;
-    else { preview.src = objectUrl; preview.load(); }
-    meta.textContent = `${file.name} / ${(file.size / 1024 / 1024).toFixed(1)} MB（未公開）`;
+
+    // 우선 첫 번째 이미지를 대표 미리보기로 표시
+    const objectUrl = URL.createObjectURL(files[0]);
+    preview.src = objectUrl;
+    preview.load();
+
+    meta.textContent = `${files.length}枚選択中`;
     setDirty(true);
-  });
+    return;
+  }
+
+  // PR 동영상은 기존대로 1개
+  const file = files[0];
+
+  if (key === 'pr' && file.size > 50 * 1024 * 1024) {
+    toast('PR動画は50MB以下にしてください。', true);
+    e.target.value = '';
+    return;
+  }
+
+  pendingFiles[key] = file;
+
+  const preview = $(spec.preview);
+  const meta = $(spec.meta);
+  const objectUrl = URL.createObjectURL(file);
+
+  preview.src = objectUrl;
+  preview.load();
+
+  meta.textContent =
+    `${file.name} / ${(file.size / 1024 / 1024).toFixed(1)} MB（未公開）`;
+
+  setDirty(true);
+});
 }
 
 displayTitle.addEventListener('input', () => setDirty(true));
@@ -308,16 +368,60 @@ publishBtn.addEventListener('click', async () => {
 };
     if (!patch.title || !patch.project_name) throw new Error('タイトルと工事名を入力してください。');
 
-    for (const [key, file] of Object.entries(pendingFiles)) {
-      const spec = fields[key];
-      const ext = (file.name.split('.').pop() || (key === 'pr' ? 'mp4' : 'jpg')).toLowerCase().replace(/[^a-z0-9]/g, '');
-      const path = `${selectedSite.site_id}/${key}_${Date.now()}.${ext}`;
+    for (const [key, value] of Object.entries(pendingFiles)) {
+  const spec = fields[key];
+
+  // 挨拶・お知らせ・週間工程：最大5枚
+  if (spec.multiple) {
+    const files = Array.isArray(value) ? value.slice(0, 5) : [value];
+    const paths = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const ext = (file.name.split('.').pop() || 'jpg')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+
+      const path =
+        `${selectedSite.site_id}/${key}_${Date.now()}_${i + 1}.${ext}`;
+
       const { error: uploadError } = await supabase.storage
         .from(cfg.STORAGE_BUCKET)
-        .upload(path, file, { cacheControl: '60', upsert: false, contentType: file.type || undefined });
+        .upload(path, file, {
+          cacheControl: '60',
+          upsert: false,
+          contentType: file.type || undefined
+        });
+
       if (uploadError) throw uploadError;
-      patch[spec.column] = path;
+
+      paths.push(path);
     }
+
+    patch[spec.column] = paths;
+    continue;
+  }
+
+  // PR動画：従来どおり1ファイル
+  const file = value;
+  const ext = (file.name.split('.').pop() || 'mp4')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+
+  const path = `${selectedSite.site_id}/${key}_${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(cfg.STORAGE_BUCKET)
+    .upload(path, file, {
+      cacheControl: '60',
+      upsert: false,
+      contentType: file.type || undefined
+    });
+
+  if (uploadError) throw uploadError;
+
+  patch[spec.column] = path;
+}
 
     const { data, error } = await supabase
       .from('sites')
