@@ -253,7 +253,7 @@ publishBtn.addEventListener('click', async () => {
   publishBtn.textContent = '公開中...';
   try {
     const region = weatherRegion.value;
-    const weatherUrl = `https://digital-signage-led.github.io/led-weather-signage/?region=${region}&content=today_weather`;
+    const weatherUrl = `https://digital-signage-led.github.io/led-weather-signage/?region=${region}&content=weekly_weather`;
     const precipUrl = `https://digital-signage-led.github.io/led-weather-signage/?region=${region}&content=weekly_precip`;
     const patch = {
       title: displayTitle.value.trim(),
