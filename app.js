@@ -260,7 +260,7 @@ publishBtn.addEventListener('click', async () => {
       project_name: projectName.value.trim(),
       weather_url: weatherUrl,
       precip_url: precipUrl,
-      weather_mode: 'today',
+      weather_mode: 'weekly',
       updated_at: new Date().toISOString()
     };
     if (!patch.title || !patch.project_name) throw new Error('タイトルと工事名を入力してください。');
